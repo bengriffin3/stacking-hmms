@@ -1,11 +1,12 @@
 
 Quantile_Norm = 0;
-datadir = 'C:\Users\au699373\OneDrive - Aarhus Universitet\Dokumenter\MATLAB\HMMMAR_BG\Behavioural Variables/';
+%datadir = 'C:\Users\au699373\OneDrive - Aarhus Universitet\Dokumenter\MATLAB\HMMMAR_BG\Behavioural Variables/';
+datadir = '/home/ben/Documents/git_repos/stacking-hmms/Behavioural_variables/';
 vars = dlmread([ datadir 'vars.txt'] ,' ');
 
 p = size(vars,2);
 
-twins = dlmread([ datadir '/twins.txt'],' ');
+twins = dlmread([ datadir 'twins.txt'],' ');
 twins = twins(2:end,2:end);
 load headers_with_category.mat
 grotKEEP = true(size(vars,1),1);
