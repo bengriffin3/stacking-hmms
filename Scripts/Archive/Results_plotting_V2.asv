@@ -1,0 +1,180 @@
+%% Plotting results
+
+% Plot distance matrices
+
+load('KLdistances_ICA50_30_09_2021_run')
+figure(1)
+subplot(3,2,1);
+imagesc(DistStatic);
+title('Static distances between subjects');
+xlabel('Subjects'); ylabel('Subjects');
+
+for i = 2:6
+    subplot(3,2,i);
+    imagesc(DistMat(:,:,i-1));
+    title('HMM distances between subjects - Repitition',i-1);
+    xlabel('Subjects'); ylabel('Subjects');
+end
+
+%% Load and store predictions
+load('staticFC_predictions_30_09_2021_run')
+explained_variance_static = explained_variance; % r²
+vars_hat_static = vars_hat;
+load('HMM_predictions_30_09_2021_run') 
+explained_variance_hmm = explained_variance; % r²
+vars_hat_hmm = vars_hat;
+
+% Reorder vectors in order to group the categories of beahvioural variables
+% together
+cat_reorder = idx;
+vars_hat_reorg = vars_hat(cat_reorder);
+vars_hat_hmm_reorg = vars_hat_hmm(cat_reorder);
+vars_hat_static_reorg = vars_hat_static(cat_reorder);
+explained_variance_reorg = explained_variance(cat_reorder);
+explained_variance_hmm_reorg = explained_variance_hmm(cat_reorder);
+explained_variance_static_reorg = explained_variance_static(cat_reorder);
+
+
+
+
+%%
+%plot predictions
+figure(2)
+cat_reorder = 1:size(vars_hat,2)';
+Y = -explained_variance_static_reorg;
+Z = explained_variance_hmm_reorg(:,1);
+scatter(cat_reorder,Y,10,repmat([115,213,246]/255,size(vars_hat,2),1),'filled')
+grid off; hold on;
+scatter(cat_reorder,Z,10,repmat([220,94,146]/255,size(vars_hat,2),1),'filled')
+title('Uncorrected');
+xlabel('Variable'); ylabel('r^2')
+
+
+% Divide the data into categories, remembering:
+% Demographics = 1; Intelligence = 2; Affective = 3; Personality = 4
+% Sleep = 5; Anatomy = 6; Other = 7;
+[GC,GR] = groupcounts(x);
+GC_cumulative = cumsum(GC);
+% We have:
+% 13 demographic variables; 99 intelligence variables; 17 affective variables
+% 65 personality variables; 25 sleep variables; 199 anatomy variables
+% 261 'other' variables
+% Therefore, we want category lines after 13, 112, 129, 194, 219, 418, 679
+
+% plot category divider lines
+hold on;
+y1 = [-1 1]; % y-range for the partition lines 
+x1 = [GC_cumulative(1) GC_cumulative(1)];           % 1st dashed line
+x2 = [GC_cumulative(2) GC_cumulative(2)];         % 2nd dashed line
+x3 = [GC_cumulative(3) GC_cumulative(3)];         % 3rd dashed line
+x4 = [GC_cumulative(4) GC_cumulative(4)];         % 4th dashed line
+x5 = [GC_cumulative(5) GC_cumulative(5)];         % 5th dashed line
+x6 = [GC_cumulative(6) GC_cumulative(6)];         % 6th dashed line
+
+p(1) = plot(x1,y1); p(2) = plot(x2,y1); p(3) = plot(x3,y1);
+p(4) = plot(x4,y1); p(5) = plot(x5,y1); p(6) = plot(x6,y1);
+hold on;
+legend('Static','HMM','Demographic','Intelligence','Affective','Peronality','Sleep','Anatomy');
+
+% %% plot predictions just for intelligence
+% load('headers_grouped_category.mat');
+% x = cell2mat(headers_grouped_category(:,4));
+% x(x~=2) = 0;
+% x(x == 2) = 1;
+% 
+% Y_intelligence = x.*Y;
+% Y_intelligence(Y_intelligence == 0) = [];
+% Z_intelligence = x.*Z;
+% Z_intelligence(Z_intelligence == 0) = [];
+% 
+% X = [1:1:size(Y_intelligence,1)];
+% 
+% figure(8)
+% %scatter(cat_reorder,Y_intelligence,10,repmat([115,213,246]/255,679,1),'filled')
+% scatter(X,Y_intelligence,10,repmat([115,213,246]/255,size(Y_intelligence,1),1),'filled')
+% grid on; hold on;
+% %scatter(cat_reorder,Z_intelligence,10,repmat([220,94,146]/255,679,1),'filled')
+% scatter(X,Z_intelligence,10,repmat([220,94,146]/255,size(Y_intelligence,1),1),'filled')
+% title('Uncorrected (Intelligence)');
+% legend('Static','HMM');
+% xlabel('Variable'); ylabel('r^2')
+
+%%
+figure(9)
+x = 1:size(explained_variance,1)
+y = explained_variance(:,1)
+scatter(x,y,10,repmat([115,213,246]/255,679,1),'filled')
+grid on; hold on;
+title('Uncorrected (Intelligence)');
+legend('Static','HMM');
+xlabel('Variable'); ylabel('r^2')
+
+%%
+figure(3)
+Diff = explained_variance_hmm(:,1)-explained_variance_static
+Diff_colour(Diff<0) = -1; ;Diff_colour(Diff>0) = 1
+Diff_cell = num2cell(Diff_colour)'
+Diff_cell(Diff_colour == 1) = {[220,94,146]/255};
+Diff_cell(Diff_colour == -1) = {[115,213,246]/255}
+Diff_cell(Diff_colour == 0) = {[0 0 0 ]}
+Diff_mat = cell2mat(Diff_cell);
+scatter(cat_reorder,Diff,10,Diff_mat,'filled')
+grid on
+title('Difference HMM - average FC')
+xlabel('Variable'); ylabel('r^2')
+
+%
+for p = 1:5
+Diff = explained_variance_hmm(:,p)-explained_variance_static;
+Diff(isnan(Diff)) = 0;
+average_diff_vec = zeros(6,1);
+% Demographics = 1
+% Intelligence = 2
+% Affective = 3
+% Personality = 4
+% Sleep = 5
+% Anatomy = 6
+% Other = 7
+
+for i = 1:7
+    average_diff_vec(i) = sum((category_index_vec == i).*Diff)/...
+    nnz((category_index_vec == i).*Diff);
+end
+
+figure(4)
+subplot(3,2,p)
+cat = categorical({'Demographics','Intelligence','Affective','Personality','Sleep','Anatomy','Other'});
+cat_reorder = reordercats(cat,{'Demographics','Intelligence','Affective','Personality','Sleep','Anatomy','Other'});
+average_diff = -average_diff_vec;
+b = bar(cat_reorder,average_diff);
+b.FaceColor = 'flat';
+b.CData(1,:) = [239,48,37]/255; b.CData(2,:) = [240,136,50]/255; b.CData(3,:) = [228,230,90]/255;
+b.CData(4,:) = [113,226,86]/255; b.CData(5,:) = [151,33,245]/255; b.CData(6,:) = [.2 .6 .5]/255;
+xlabel('Category'); ylabel('Average Difference')
+title('Repitition',p);
+end
+
+% Reorder index
+
+cat_reorder = 1:679';
+Y = -explained_variance_static;
+Z = explained_variance_hmm(:,1);
+figure(5)
+title('Trying to reorder so demographics first etc.')
+subplot(2,1,1)
+scatter(cat_reorder,Y,10,repmat([115,213,246]/255,679,1),'filled')
+grid on
+hold on
+scatter(cat_reorder,Z,10,repmat([220,94,146]/255,679,1),'filled')
+legend('Static','HMM')
+xlabel('Variable'); ylabel('r^2')
+subplot(2,1,2)
+Y_2 = Y(idx)
+Z_2 = Z(idx)
+scatter(cat_reorder,Y_2,10,repmat([115,213,246]/255,679,1),'filled')
+grid on
+hold on
+scatter(cat_reorder,Z_2,10,repmat([220,94,146]/255,679,1),'filled')
+legend('Static','HMM')
+xlabel('Variable'); ylabel('r^2')
+    
