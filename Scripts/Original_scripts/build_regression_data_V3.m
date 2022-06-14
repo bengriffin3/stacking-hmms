@@ -1,14 +1,14 @@
 
 Quantile_Norm = 0;
-%datadir = 'C:\Users\au699373\OneDrive - Aarhus Universitet\Dokumenter\MATLAB\HMMMAR_BG\Behavioural Variables/';
-datadir = '/home/ben/Documents/git_repos/stacking-hmms/Behavioural_variables/';
+%datadir = 'C:\Users\au699373\OneDrive - Aarhus Universitet\Dokumenter\MATLAB\HMMMAR_BG\Behavioural Variables/'; % Desktop
+datadir = '/home/ben/Documents/git_repos/stacking-hmms/Behavioural_variables/'; % Morpheus
 vars = dlmread([ datadir 'vars.txt'] ,' ');
 
 p = size(vars,2);
 
 twins = dlmread([ datadir 'twins.txt'],' ');
 twins = twins(2:end,2:end);
-load headers_with_category.mat
+load([datadir 'headers_with_category.mat'])
 grotKEEP = true(size(vars,1),1);
 grotKEEP(find(vars(:,1)==376247))=0; % remove subjects that PALM can't cope with
 grotKEEP(find(vars(:,1)==168240))=0; % remove subjects that PALM can't cope with
